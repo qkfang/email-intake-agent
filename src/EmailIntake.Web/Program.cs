@@ -9,6 +9,10 @@ using Microsoft.Identity.Web.UI;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+}
 var authEnabled = !string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientId"]);
 if (!authEnabled && !builder.Environment.IsDevelopment())
 {

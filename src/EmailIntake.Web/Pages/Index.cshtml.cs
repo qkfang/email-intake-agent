@@ -18,7 +18,7 @@ public class IndexModel(IntakeService intake, FoundryService foundry, ILogger<In
     public List<IFormFile> Attachments { get; set; } = [];
 
     [BindProperty, StringLength(2000)]
-    public string SearchQuery { get; set; } = "";
+    public string? SearchQuery { get; set; }
 
     public IntakeResult? Result { get; private set; }
     public bool FoundryConfigured => foundry.IsConfigured;
