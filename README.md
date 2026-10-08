@@ -91,6 +91,7 @@ The Bicep deployment provisions:
 - Document Intelligence account with key-based authentication disabled.
 - Log Analytics and Application Insights.
 - Scoped Azure AI User and Cognitive Services User role assignments for the Web App.
+- Account-scoped Azure AI User for the Foundry project identity, so agent-side model inference works when provisioned through Bicep.
 - App settings for endpoints, model, Entra, Work IQ and telemetry; optional Entra secret **Key Vault reference**.
 
 Model/region availability and quota are subscription-specific. Review `aiLocation`, model name/version, deployment SKU and capacity before deployment. This template creates a new Foundry project; create its Work IQ connection afterward, then redeploy with the connection ID.

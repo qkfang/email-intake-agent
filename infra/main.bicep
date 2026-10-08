@@ -237,6 +237,16 @@ resource appFoundryRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
+resource projectFoundryRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: foundryAccount
+  name: guid(foundryAccount.id, foundryProject.id, azureAiUserRoleId)
+  properties: {
+    principalId: foundryProject.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: azureAiUserRoleId
+  }
+}
+
 resource appDocumentIntelligenceRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: documentIntelligence
   name: guid(documentIntelligence.id, webApp.id, cognitiveServicesUserRoleId)
