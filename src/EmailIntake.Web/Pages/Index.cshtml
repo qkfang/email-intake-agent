@@ -1,0 +1,96 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Email intake";
+}
+<h1>Email intake agent</h1>
+<p>Understand email intent, read attached forms and documents, and recommend the next action with Azure AI Foundry.</p>
+<p class="alert alert-info">Read-only demonstration: messages are not sent, moved, deleted or modified. Results require human approval.</p>
+@if (!Model.FoundryConfigured)
+{
+    <p class="alert alert-warning">Foundry is not configured. You can explore the form, but processing requires an Azure project and model deployment.</p>
+}
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<div class="row g-4">
+    <section class="col-lg-7">
+        <h2>Process an email</h2>
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Upload">
+            <div class="mb-3">
+                <label asp-for="Email.Subject" class="form-label">Subject</label>
+                <input asp-for="Email.Subject" class="form-control" maxlength="500" required />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email.Sender" class="form-label">Sender email</label>
+                <input asp-for="Email.Sender" class="form-control" type="email" maxlength="320" required />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email.Body" class="form-label">Email body</label>
+                <textarea asp-for="Email.Body" class="form-control" rows="8" maxlength="50000" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Attachments" class="form-label">Forms and documents</label>
+                <input asp-for="Attachments" type="file" multiple class="form-control"
+                       accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.docx,.xlsx,.pptx,.txt,.csv" />
+                <small>Up to 5 files; 10 MB each, 20 MB total. PDF, images, Office documents, UTF-8 TXT/CSV. Attachments must be reselected after a failed submission.</small>
+            </div>
+            <button class="btn btn-primary" type="submit">Analyze body &amp; attachments</button>
+        </form>
+    </section>
+    <section class="col-lg-5">
+        <h2>Microsoft 365 via Work IQ</h2>
+        <p>Search your accessible email using the signed-in user's identity, then categorize the matching email and available attachment evidence.</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <p>Signed in. <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a></p>
+        }
+        else
+        {
+            <p>Work IQ requires Entra sign-in and a Foundry OAuth connection.</p>
+        }
+        <form method="post" asp-page-handler="WorkIq">
+            <label asp-for="SearchQuery" class="form-label">Mailbox search</label>
+            <textarea asp-for="SearchQuery" class="form-control mb-3" rows="4" maxlength="2000"
+                      placeholder="Find the latest email about an invoice from Contoso" required></textarea>
+            <button class="btn btn-outline-primary" type="submit" disabled="@(!Model.WorkIqAvailable)">Find &amp; analyze with Work IQ</button>
+        </form>
+        <p class="mt-3"><small>Work IQ may return only snippets or attachment metadata. Missing content is flagged for review; upload the original documents above for full extraction.</small></p>
+    </section>
+</div>
+@if (Model.Result is { } result)
+{
+    <section class="mt-5" aria-live="polite">
+        <h2>Intake result</h2>
+        <p><strong>@result.Category</strong> · Confidence @result.Confidence.ToString("P0") ·
+            @(result.RequiresHumanReview ? "Human review required" : "Ready for human approval")</p>
+        <h3>Understanding</h3>
+        <p class="intake-text">@result.Summary</p>
+        <h3>Recommended action</h3>
+        <p class="intake-text">@result.SuggestedAction</p>
+        @foreach (var document in result.Attachments)
+        {
+            <article class="card mb-3">
+                <div class="card-body">
+                    <h3 class="h5">@document.FileName — @document.DocumentType</h3>
+                    <p class="intake-text">@document.Summary</p>
+                    <dl>
+                        @foreach (var field in document.Fields)
+                        {
+                            <dt>@field.Key</dt><dd class="intake-text">@field.Value</dd>
+                        }
+                    </dl>
+                    @if (document.MissingFields.Count > 0)
+                    {
+                        <p><strong>Missing fields:</strong> @string.Join(", ", document.MissingFields)</p>
+                    }
+                </div>
+            </article>
+        }
+        <h3>Evidence</h3>
+        <ul>@foreach (var evidence in result.Evidence) { <li>@evidence</li> }</ul>
+        @if (result.Warnings.Count > 0)
+        {
+            <h3>Warnings</h3>
+            <ul class="text-danger">@foreach (var warning in result.Warnings) { <li>@warning</li> }</ul>
+        }
+    </section>
+}

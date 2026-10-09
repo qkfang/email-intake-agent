@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EmailIntake.Web/EmailIntake.Web.csproj" />
+  </Folder>
+</Solution>
